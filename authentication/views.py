@@ -2,7 +2,7 @@
 from django.shortcuts import render,redirect,HttpResponse
 from .form import SignUp_From, SignIn_Form,Profile_Form
 from django.contrib.auth import authenticate,login,logout
-from .models import CustomUser
+from .models import CustomUser, Profile
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 
@@ -55,15 +55,27 @@ def sign_out(request):
     return redirect('sign_in')
 
 def home(request):
-    form= Profile_Form()
+    context = {}
+    user = request.user
+    if Profile.objects.filter(user=user).exists():
+        profile = Profile.objects.get(user=user)
+        context['profile'] = profile
+    else:
+        form= Profile_Form()
+        context['form'] = form
+    
     if request.method=='POST':
         form=Profile_Form(request.POST)
         if form.is_valid():
-            user= form.save()
-            user.save()
+            profile = form.save()
+            profile.user = user
+            profile.save()
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         
-    return render(request,'home.html', {'form':form})
+    return render(request,'home.html', context)
+
+
+
 
 def profile(request):
     
